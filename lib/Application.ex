@@ -4,7 +4,8 @@ defmodule InterconnectNodesApplication do
 
   def start(_type, _args) do
     children = [
-      PingPongSupervisor
+      PingPongSupervisor,
+      Cluster.Observer.Supervisor
     ]
 
     opts = [strategy: :one_for_one, name: SupervisorDeSupervisores]
