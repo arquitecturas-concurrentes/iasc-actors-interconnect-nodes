@@ -8,6 +8,7 @@ defmodule Cluster.Observer do
 
   @impl GenServer
   def init(state) do
+    # https://erlang.org/doc/man/net_kernel.html#monitor_nodes-1
     :net_kernel.monitor_nodes(true)
 
     {:ok, state}
