@@ -110,3 +110,35 @@ Ahora solo flata ver, como podemos llamar desde b al proceso PingPong supervisad
 iex(b@altair)14> GenServer.call({PingPong, :a@altair}, :ping)  
 :pong
 ```
+
+## Interconectando Nodos con sys.config
+
+La idea de interconectar los nodos de manera manual, tal vez no es la mejor, por lo que se puede optar por la de utilizar un archivo de configuracion [sys.config](https://erlang.org/doc/man/config.html), que nos permita definir los nodos que se levantaran y el timeout para que se interconecten los nodos. Hay que tener en cuenta que la sintaxis que hay que usar en este tipo de archivos es de elang y no de Elixir.
+
+```erlang
+[{kernel,
+  [
+    {sync_nodes_optional, ['a@127.0.0.1', 'b@127.0.0.1']},
+    {sync_nodes_timeout, 5000}
+  ]}
+].
+```
+
+Por lo que para que inicialicemos estos nodos, hay que pasarle la opcion `erl` cuando inicializamos el nodo:
+
+```bash
+iex --name a@127.0.0.1 --erl "-config sys.config" -S mix
+```
+
+y el segundo nodo de la siguiente manera
+
+```bash
+iex --name b@127.0.0.1 --erl "-config sys.config" -S mix
+```
+
+Ahora una vez que esta incializado, vamos a poder que los nodos se interconectan solos y sin mayor interaccion entre ellos:
+
+```elixir
+iex(a@127.0.0.1)1> Node.list
+[:"b@127.0.0.1"]
+```

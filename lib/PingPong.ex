@@ -23,4 +23,4 @@ defmodule PingPong do
 
 end
 
-#GenServer.call({PingPong, :a@altair}, :ping
+#GenServer.call({PingPong, :a@altair}, :ping)
