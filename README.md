@@ -117,14 +117,19 @@ La idea de interconectar los nodos de manera manual, tal vez no es la mejor, por
 
 ```erlang
 [{kernel,
-  [
+  
     {sync_nodes_optional, ['a@127.0.0.1', 'b@127.0.0.1']},
     {sync_nodes_timeout, 5000}
   ]}
 ].
 ```
 
-Por lo que para que inicialicemos estos nodos, hay que pasarle la opcion `erl` cuando inicializamos el nodo:
+Este archivo de configuracion setea valores por default, cuando se inicializa el nodo, en este caso, cada vez que inicialicemos un nodo aplicando esta configuracion, agregaremos dos opciones:
+
+- sync_nodes_optional: La lista de posibles nodos en el cluster.
+- sync_nodes_timeout: El timeout para poder sincronizar los nodos.
+
+Ahora para aplicar esta configuracion cuando inicializamos, habra que pasarle la opcion `erl` cuando inicializamos el nodo:
 
 ```bash
 iex --name a@127.0.0.1 --erl "-config sys.config" -S mix
