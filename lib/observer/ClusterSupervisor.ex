@@ -22,6 +22,7 @@ defmodule Cluster.Observer do
     {:noreply, state}
   end
 
+  @impl GenServer
   def handle_info({:nodeup, node}, state) do
     # A new node joined the cluster
     Logger.info("--- Node up: #{node}")
