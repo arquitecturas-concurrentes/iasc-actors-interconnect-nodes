@@ -147,3 +147,49 @@ Ahora una vez que esta incializado, vamos a poder que los nodos se interconectan
 iex(a@127.0.0.1)1> Node.list
 [:"b@127.0.0.1"]
 ```
+
+## Monitoreando los nodos conectados/desconectados del cluster
+
+Se puede llegar a saber cuando exactamente sucede que un nodo de conecta o se desconecta de un cluster. Esto nos puede llegar a ser particularmente util cuando queremos monitorear este tipo de eventos, sea para loggearlo o bien hacer alguna accion frente a ello. Para lograr esto, hay que usar la funcion del modulo de `:net_kernel`, que esta definido en el kernel de Erlang. La funcion que nos permite monitorear desde un proceso estos eventos es `monitor_nodes\1`. Mas de esto en la [documentacion](https://erlang.org/doc/man/net_kernel.html#monitor_nodes-1).
+
+Podemos llamando a la funcion `:net_kernel.monitor_nodes(true)`, que el proceso que lo llame, monitoree la conexion/desconexion de nodos. Un ejemplo simple lo podemos ver en este repo y podemos llamarlo `ClusterObserver`. La idea es que sea un Genserver, que actue como listener de estos eventos, y se suscriba a estos, usando la funcion `monitor_nodes\1`
+
+
+```elixir
+defmodule Cluster.Observer do
+  use GenServer
+  require Logger
+
+  def start_link(_)do
+    GenServer.start_link(__MODULE__, %{})
+  end
+
+  @impl GenServer
+  def init(state) do
+    # https://erlang.org/doc/man/net_kernel.html#monitor_nodes-1
+    :net_kernel.monitor_nodes(true)
+
+    {:ok, state}
+  end
+
+  @impl GenServer
+  @doc """
+  Handler that will be called when a node has left the cluster.
+  """
+  def handle_info({:nodedown, node}, state) do
+    Logger.info("--- Node down: #{node}")
+
+    {:noreply, state}
+  end
+
+  @impl GenServer
+  @doc """
+  Handler that will be called when a node has joined the cluster.
+  """
+  def handle_info({:nodeup, node}, state) do
+    Logger.info("--- Node up: #{node}")
+
+    {:noreply, state}
+  end
+end
+```
