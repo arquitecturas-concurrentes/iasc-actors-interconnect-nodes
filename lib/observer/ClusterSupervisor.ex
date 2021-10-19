@@ -19,7 +19,7 @@ defmodule Cluster.Observer do
   Handler that will be called when a node has left the cluster.
   """
   def handle_info({:nodedown, node}, state) do
-    Logger.info("--- Node down: #{node}")
+    Logger.info("---- Node down: #{node} ----")
 
     {:noreply, state}
   end
@@ -29,7 +29,7 @@ defmodule Cluster.Observer do
   Handler that will be called when a node has joined the cluster.
   """
   def handle_info({:nodeup, node}, state) do
-    Logger.info("--- Node up: #{node}")
+    Logger.info("---- Node up: #{node} ----")
 
     {:noreply, state}
   end
