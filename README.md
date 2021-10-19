@@ -110,3 +110,86 @@ Ahora solo flata ver, como podemos llamar desde b al proceso PingPong supervisad
 iex(b@altair)14> GenServer.call({PingPong, :a@altair}, :ping)  
 :pong
 ```
+
+## Interconectando Nodos con sys.config
+
+La idea de interconectar los nodos de manera manual, tal vez no es la mejor, por lo que se puede optar por la de utilizar un archivo de configuracion [sys.config](https://erlang.org/doc/man/config.html), que nos permita definir los nodos que se levantaran y el timeout para que se interconecten los nodos. Hay que tener en cuenta que la sintaxis que hay que usar en este tipo de archivos es de elang y no de Elixir.
+
+```erlang
+[{kernel,
+  
+    {sync_nodes_optional, ['a@127.0.0.1', 'b@127.0.0.1']},
+    {sync_nodes_timeout, 5000}
+  ]}
+].
+```
+
+Este archivo de configuracion setea valores por default, cuando se inicializa el nodo, en este caso, cada vez que inicialicemos un nodo aplicando esta configuracion, agregaremos dos opciones:
+
+- sync_nodes_optional: La lista de posibles nodos en el cluster.
+- sync_nodes_timeout: El timeout para poder sincronizar los nodos.
+
+Ahora para aplicar esta configuracion cuando inicializamos, habra que pasarle la opcion `erl` cuando inicializamos el nodo:
+
+```bash
+iex --name a@127.0.0.1 --erl "-config sys.config" -S mix
+```
+
+y el segundo nodo de la siguiente manera
+
+```bash
+iex --name b@127.0.0.1 --erl "-config sys.config" -S mix
+```
+
+Ahora una vez que esta incializado, vamos a poder que los nodos se interconectan solos y sin mayor interaccion entre ellos:
+
+```elixir
+iex(a@127.0.0.1)1> Node.list
+[:"b@127.0.0.1"]
+```
+
+## Monitoreando los nodos conectados/desconectados del cluster
+
+Se puede llegar a saber cuando exactamente sucede que un nodo de conecta o se desconecta de un cluster. Esto nos puede llegar a ser particularmente util cuando queremos monitorear este tipo de eventos, sea para loggearlo o bien hacer alguna accion frente a ello. Para lograr esto, hay que usar la funcion del modulo de `:net_kernel`, que esta definido en el kernel de Erlang. La funcion que nos permite monitorear desde un proceso estos eventos es `monitor_nodes\1`. Mas de esto en la [documentacion](https://erlang.org/doc/man/net_kernel.html#monitor_nodes-1).
+
+Podemos llamando a la funcion `:net_kernel.monitor_nodes(true)`, que el proceso que lo llame, monitoree la conexion/desconexion de nodos. Un ejemplo simple lo podemos ver en este repo y podemos llamarlo `ClusterObserver`. La idea es que sea un Genserver, que actue como listener de estos eventos, y se suscriba a estos, usando la funcion `monitor_nodes\1`
+
+
+```elixir
+defmodule Cluster.Observer do
+  use GenServer
+  require Logger
+
+  def start_link(_)do
+    GenServer.start_link(__MODULE__, %{})
+  end
+
+  @impl GenServer
+  def init(state) do
+    # https://erlang.org/doc/man/net_kernel.html#monitor_nodes-1
+    :net_kernel.monitor_nodes(true)
+
+    {:ok, state}
+  end
+
+  @impl GenServer
+  @doc """
+  Handler that will be called when a node has left the cluster.
+  """
+  def handle_info({:nodedown, node}, state) do
+    Logger.info("--- Node down: #{node}")
+
+    {:noreply, state}
+  end
+
+  @impl GenServer
+  @doc """
+  Handler that will be called when a node has joined the cluster.
+  """
+  def handle_info({:nodeup, node}, state) do
+    Logger.info("--- Node up: #{node}")
+
+    {:noreply, state}
+  end
+end
+```
