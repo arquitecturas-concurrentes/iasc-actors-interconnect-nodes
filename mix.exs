@@ -4,8 +4,8 @@ defmodule InterconnectNodes.MixProject do
   def project do
     [
       app: :interconnect_nodes,
-      version: "0.1.0",
-      elixir: "~> 1.13-dev",
+      version: "0.1.1",
+      elixir: "~> 1.20",
       start_permanent: Mix.env() == :prod,
       deps: deps()
     ]
@@ -14,7 +14,7 @@ defmodule InterconnectNodes.MixProject do
   # Run "mix help compile.app" to learn about applications.
   def application do
     [
-      extra_applications: [:logger],
+      extra_applications: [:logger, :wx, :observer, :runtime_tools],
       mod: {InterconnectNodesApplication, []}
     ]
   end
