@@ -25,9 +25,6 @@ defmodule Cluster.Observer do
   end
 
   @impl GenServer
-  @doc """
-  Handler that will be called when a node has joined the cluster.
-  """
   def handle_info({:nodeup, node}, state) do
     Logger.info("---- Node up: #{node} ----")
 
